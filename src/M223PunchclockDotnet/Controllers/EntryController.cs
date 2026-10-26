@@ -33,6 +33,42 @@ namespace M223PunchclockDotnet.Controllers
             return CreatedAtAction(nameof(Get), new{id = entry.Id}, entry);
         }
 
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteEntry(int id)
+        {
+            var entry = await _entryService.FindById(id);
+            if (entry == null)
+            {
+                return NotFound();
+            }
+
+            await _entryService.DeleteEntry(id);
+            return NoContent();
+        }
+    
+        [HttpPut("{id}")]
+        [Consumes(MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateEntry(int id, Entry entry)
+        {
+            if (id != entry.Id)
+            {
+                return BadRequest();
+            }
+
+            var existingEntry = await _entryService.FindById(id);
+            if (existingEntry == null)
+            {
+                return NotFound();
+            }
+
+            await _entryService.UpdateEntry(entry);
+            return NoContent();
+        }
 
     }
 }

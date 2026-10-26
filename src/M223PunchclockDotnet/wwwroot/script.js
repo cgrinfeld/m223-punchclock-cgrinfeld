@@ -26,6 +26,43 @@ const createEntry = (e) => {
     });
 };
 
+const deleteEntry = (id) => {
+    fetch(`${URL}/entries/${id}`, {
+        method: 'DELETE'}).then((result) => {
+        if (result.ok) {
+            entries = entries.filter((e) => e.id !== id);
+            renderEntries();
+        }
+    });
+};
+
+const updateEntry = (id, entry) => {
+    fetch(`${URL}/entries/${id}`, {
+        method: 'PUT',
+        headers: {
+            contentType: 'application/json'
+        },
+        body: JSON.stringify(entry)
+        }).then((result) => {
+        if (result.ok) {
+            entries = entries.map((e) => e.id === id ? { ...e, ...entry } : e);
+            renderEntries();
+        }});
+};
+
+fetch(`${URL}/entries/{id}`, {
+    method: 'PUT',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(entry)
+}).then((result) => {
+    if (result.ok) {
+        entries = entries.map((e) => e.id === id ? { ...e, ...entry } : e);
+        renderEntries();
+    }
+});
+
 const indexEntries = () => {
     fetch(`${URL}/entries`, {
         method: 'GET'
@@ -53,6 +90,26 @@ const renderEntries = () => {
         row.appendChild(createCell(new Date(entry.checkIn).toLocaleString()));
         row.appendChild(createCell(new Date(entry.checkOut).toLocaleString()));
         display.appendChild(row);
+
+        const deleteButton = document.createElement('button');
+        const updateButton = document.createElement('button');
+        deleteButton.innerText = 'Delete';
+        updateButton.innerText = 'Update';
+        deleteButton.addEventListener('click', () => deleteEntry(entry.id));
+        updateButton.addEventListener('click', () => {
+            const newCheckIn = prompt('Enter new check-in date and time:', new Date(entry.checkIn).toLocaleString());
+            const newCheckOut = prompt('Enter new check-out date and time:', new Date(entry.checkOut).toLocaleString());
+
+            if (newCheckIn && newCheckOut) {
+                const updatedEntry = {
+                    checkIn: dateAndTimeToDate(newCheckIn.split(' ')[0], newCheckIn.split(' ')[1]),
+                    checkOut: dateAndTimeToDate(newCheckOut.split(' ')[0], newCheckOut.split(' ')[1])
+                };
+                updateEntry(entry.id, updatedEntry);
+            }
+        });
+        row.appendChild(deleteButton);
+        row.appendChild(updateButton);
     });
 };
 
