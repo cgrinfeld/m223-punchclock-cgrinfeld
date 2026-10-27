@@ -1,4 +1,5 @@
 using System.Net.Mime;
+using M223PunchclockDotnet.DTO;
 using M223PunchclockDotnet.Model;
 using M223PunchclockDotnet.Service;
 using Microsoft.AspNetCore.Mvc;
@@ -17,20 +18,26 @@ namespace M223PunchclockDotnet.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType<Entry>(StatusCodes.Status200OK)]
+        [ProducesResponseType<List<Entry>>(StatusCodes.Status200OK)]
         public async Task<IActionResult> Get()
         {
             var allEntries = await _entryService.FindAll();
             return Ok(allEntries);
         }
 
-        [HttpPost()]
+        [HttpPost]
         [Consumes(MediaTypeNames.Application.Json)]
         [ProducesResponseType<Entry>(StatusCodes.Status201Created)]
-        public async Task<ActionResult<Entry>> AddEntry(Entry entry){
-            var newElement = await _entryService.AddEntry(entry);
-
-            return CreatedAtAction(nameof(Get), new{id = entry.Id}, entry);
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<Entry>> AddEntry(EntryDto dto)
+        {
+            var entry = new Entry
+            {
+                CheckIn = dto.CheckIn!.Value,
+                CheckOut = dto.CheckOut!.Value
+            };
+            var newEntry = await _entryService.AddEntry(entry);
+            return CreatedAtAction(nameof(Get), new { id = newEntry.Id }, newEntry);
         }
 
         [HttpDelete("{id}")]
@@ -47,15 +54,15 @@ namespace M223PunchclockDotnet.Controllers
             await _entryService.DeleteEntry(id);
             return NoContent();
         }
-    
+
         [HttpPut("{id}")]
         [Consumes(MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> UpdateEntry(int id, Entry entry)
+        public async Task<IActionResult> UpdateEntry(int id, EntryDto dto)
         {
-            if (id != entry.Id)
+            if (id != dto.Id)
             {
                 return BadRequest();
             }
@@ -66,9 +73,10 @@ namespace M223PunchclockDotnet.Controllers
                 return NotFound();
             }
 
-            await _entryService.UpdateEntry(entry);
+            existingEntry.CheckIn = dto.CheckIn!.Value;
+            existingEntry.CheckOut = dto.CheckOut!.Value;
+            await _entryService.UpdateEntry(existingEntry);
             return NoContent();
         }
-
     }
 }
